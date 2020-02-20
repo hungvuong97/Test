@@ -19,7 +19,7 @@ const handle = app.getRequestHandler();
 const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY, HOST, } = process.env;
 const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy');
 const getSubscriptionUrl = require('./server/getSubscriptionUrl');
-
+const getInforShopyfi = require('./server/getInforShopyfi');
 
 app.prepare().then(() => {
   const server = new Koa();
@@ -52,6 +52,7 @@ app.prepare().then(() => {
           console.log('Failed to register webhook', registration.result);
         }
         await getSubscriptionUrl(ctx, accessToken, shop);
+        await getInforShopyfi(ctx, accessToken, shop)
       },
     }),
   );
@@ -61,6 +62,7 @@ app.prepare().then(() => {
   router.post('/webhooks/products/create', webhook, (ctx) => {
     console.log('received webhook: ', ctx.state.webhook);
   });
+
   server.use(graphQLProxy({ version: ApiVersion.October19 }))
   router.get('*', verifyRequest(), async (ctx) => {
     await handle(ctx.req, ctx.res);
