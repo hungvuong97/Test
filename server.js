@@ -5,6 +5,7 @@ const next = require('next');
 const { default: createShopifyAuth } = require('@shopify/koa-shopify-auth');
 const { verifyRequest } = require('@shopify/koa-shopify-auth');
 const session = require('koa-session');
+const mongoose = require('mongoose');
 
 dotenv.config();
 const { default: graphQLProxy } = require('@shopify/koa-shopify-graphql-proxy');
@@ -16,10 +17,14 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY, HOST, } = process.env;
+const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY, HOST, MONGO_URI } = process.env;
 const { ApiVersion } = require('@shopify/koa-shopify-graphql-proxy');
 const getSubscriptionUrl = require('./server/getSubscriptionUrl');
 const getInforShopyfi = require('./server/getInforShopyfi');
+const db = require('./config/key').mongoURI;
+mongoose.connect(db)
+    .then(() => console.log('Mongo Connected'))
+    .catch(err => console.log(err));
 
 app.prepare().then(() => {
   const server = new Koa();
@@ -62,6 +67,11 @@ app.prepare().then(() => {
   router.post('/webhooks/products/create', webhook, (ctx) => {
     console.log('received webhook: ', ctx.state.webhook);
   });
+
+  router.get('/getData', (ctx) => {
+    console.log(ctx.session)
+  })
+
 
   server.use(graphQLProxy({ version: ApiVersion.October19 }))
   router.get('*', verifyRequest(), async (ctx) => {
